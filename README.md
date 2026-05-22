@@ -1,5 +1,5 @@
-# Microsoft 365 Auditor script
-This script collects users, groups and Teams of a Microsoft 365 environment on .xlsx file for audit and review purposes
+# Microsoft 365 Admin Operations script
+Menu-driven PowerShell tool for common Microsoft 365 admin operations via Microsoft Graph. Sibling project to [gwadmin](https://github.com/ivancarlosti/gwadmin) for Google Workspace.
 
 <!-- buttons -->
 [![Stars](https://img.shields.io/github/stars/ivancarlosti/m365auditor?label=⭐%20Stars&color=gold&style=flat)](https://github.com/ivancarlosti/m365auditor/stargazers)
@@ -17,18 +17,51 @@ This script collects users, groups and Teams of a Microsoft 365 environment on .
 [![Patreon](https://img.shields.io/badge/Patreon-f96854)][patreon]
 <!-- endbuttons -->
 
+## Operations
+
+| # | Operation | What it does |
+|---|---|---|
+| 1 | **Copy mailbox messages to a shared mailbox** | Copies all messages from all folders of a source mailbox into a target shared mailbox, preserving folder structure. Source is not modified. Re-runs dedupe by `internetMessageId`. |
+| 2 | **Copy OneDrive content to a new SharePoint site** | Provisions a new Microsoft 365 group (which creates a SharePoint site), waits for it to come online, then copies the source user's entire OneDrive into the group's document library. Source OneDrive is not modified. |
+| 3 | **Transfer calendars to another account** | Copies all events (and optionally secondary calendars) from a source user to a target user. Optional ownership reassignment for future events organized by source — see limitation below. |
+
 ## Instructions
-* Save the last release version and extract files locally (download [here](https://github.com/ivancarlosti/m365auditor/releases/latest))
-* Change variables of `mainscript.ps1` if needed
-* Update `tenantIds.txt` with your tenants
-* Run `mainscript.ps1` on PowerShell (right-click on file > Run with PowerShell)
-* Follow instructions selecting tenant, authenticate, collect .zip file on `$destinationpath`
-* If needs help to install or update required modules, run `ADMIN-install-modules.ps1` as administrator
+* Save the latest release and extract files locally (download [here](https://github.com/ivancarlosti/m365auditor/releases/latest))
+* Update `tenantIds.txt` with your tenants (one per line)
+* Run `mainscript.ps1` in PowerShell (right-click > Run with PowerShell)
+* Select a tenant, authenticate with an admin account, then choose an operation from the menu
+* Logs for each operation are written to `Downloads\m365admin-logs\`
+* If modules need to be installed or updated, run `ADMIN-install-modules.ps1` as Administrator
 
 ## Requirements
 * Windows 10+ or Windows Server 2019+
-* PowerShell 5.x (some modules still runs under .NET Framework, PowerShell 7.x uses .NET Core)
-* Modules `MicrosoftTeams`, `ImportExcel`, `Microsoft.Graph`, `ImportExcel` on PowerShell
+* PowerShell 5.x or 7.x
+* PowerShell modules (installed via `ADMIN-install-modules.ps1`):
+  * `Microsoft.Graph.Authentication`
+  * `Microsoft.Graph.Users`
+  * `Microsoft.Graph.Groups`
+  * `Microsoft.Graph.Mail`
+  * `Microsoft.Graph.Files`
+  * `Microsoft.Graph.Sites`
+  * `Microsoft.Graph.Calendar`
+  * `Microsoft.Graph.Identity.DirectoryManagement`
+
+## Required Microsoft Graph scopes
+The script requests the following scopes on `Connect-MgGraph`. All require admin consent:
+
+```
+User.Read.All Group.ReadWrite.All Directory.Read.All
+Mail.ReadWrite Mail.ReadWrite.Shared MailboxSettings.Read
+Files.ReadWrite.All Sites.ReadWrite.All
+Calendars.ReadWrite Calendars.ReadWrite.Shared
+```
+
+For the mailbox copy operation, the signed-in admin must have FullAccess on the target shared mailbox.
+
+## Known limitations
+* **Mailbox copy**: Microsoft Graph does not support cross-mailbox copy actions, so messages are exported as MIME from source and re-imported on target. Headers, attachments, and `internetMessageId` are preserved; `isRead` and `categories` are re-applied via a follow-up PATCH.
+* **OneDrive copy**: file version history is not preserved (only the current version is copied). OneNote (`.one`) notebooks and files over 250 GB are skipped with a warning.
+* **Calendar ownership reassignment**: Microsoft Graph treats `event.organizer` as immutable — there is no Graph equivalent of Google's calendar-transfer API. The opt-in reassignment in option 3 is implemented as **delete-and-recreate** for future events where the source is the organizer, which sends cancellation emails followed by new invites to all attendees, and regenerates any Teams meeting links. This is a Microsoft platform limitation, not a tool limitation. The feature is opt-in and requires an explicit confirmation prompt.
 
 <!-- footer -->
 ---

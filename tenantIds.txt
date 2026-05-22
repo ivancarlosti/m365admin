@@ -1,1 +1,3 @@
-tenantID01.onmicrosoft.comtenantID02.onmicrosoft.comtenantID03.onmicrosoft.com
+tenantID01.onmicrosoft.com
+tenantID02.onmicrosoft.com
+tenantID03.onmicrosoft.com

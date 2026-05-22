@@ -3,7 +3,7 @@
 $currentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($currentIdentity)
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "⚠ This script must be run as Administrator. Please restart PowerShell with elevated privileges." -ForegroundColor Yellow
+    Write-Host "This script must be run as Administrator. Please restart PowerShell with elevated privileges." -ForegroundColor Yellow
     Read-Host -Prompt "Press Enter to exit"
     exit
 }
@@ -19,10 +19,14 @@ try {
 
 # List of required modules
 $modules = @(
-    'MicrosoftTeams',
-    'ImportExcel',
-    'Microsoft.Graph',
-    'ExchangeOnlineManagement'
+    'Microsoft.Graph.Authentication',
+    'Microsoft.Graph.Users',
+    'Microsoft.Graph.Groups',
+    'Microsoft.Graph.Mail',
+    'Microsoft.Graph.Files',
+    'Microsoft.Graph.Sites',
+    'Microsoft.Graph.Calendar',
+    'Microsoft.Graph.Identity.DirectoryManagement'
 )
 
 
@@ -73,4 +77,3 @@ if ($updatedModules.Count -gt 0) {
 
 Write-Host "`nAll modules processed successfully." -ForegroundColor Cyan
 Read-Host -Prompt "Press Enter to exit"
-
